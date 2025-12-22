@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
 <style>
-body { background-color: #f8f9fa; }
+body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 .container { margin-top: 40px; }
 table th { background-color: #0d6efd; color: white; }
 .summary-card { background-color: #ffffff; border-radius: 10px; padding: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 20px; }
@@ -36,7 +36,7 @@ table th { background-color: #0d6efd; color: white; }
           <input type="number" id="entryInstallment" class="form-control" placeholder="মাসিক কিস্তি">
         </div>
         <div class="col-md-2">
-          <input type="number" id="entrySaving" class="form-control" placeholder="সঞ্চয়/Extra">
+          <input type="number" id="entrySaving" class="form-control" placeholder="সঞ্চয়/Extra">
         </div>
         <div class="col-md-3">
           <button class="btn btn-primary w-100" onclick="addEntry()">Add Entry</button>
@@ -56,7 +56,7 @@ table th { background-color: #0d6efd; color: white; }
               <th>নাম</th>
               <th>মোট</th>
               <th>মাসিক কিস্তি/খরচ</th>
-              <th>সঞ্চয়</th>
+              <th>সঞ্চয়</th>
               <th>বাকি মাস</th>
               <th>মোট পরিশোধিত</th>
             </tr>
@@ -68,16 +68,16 @@ table th { background-color: #0d6efd; color: white; }
   </div>
 
   <!-- Summary Card -->
-  <div class="summary-card d-flex justify-content-around text-center">
-    <div><strong>মোট:</strong> <span id="totalAmount">0</span> টাকা</div>
-    <div><strong>মোট পরিশোধিত:</strong> <span id="totalPaid">0</span> টাকা</div>
-    <div><strong>মোট সঞ্চয়:</strong> <span id="totalSaving">0</span> টাকা</div>
+  <div class="summary-card d-flex justify-content-around text-center flex-wrap">
+    <div class="me-3"><strong>মোট:</strong> <span id="totalAmount">0</span> টাকা</div>
+    <div class="me-3"><strong>মোট পরিশোধিত:</strong> <span id="totalPaid">0</span> টাকা</div>
+    <div class="me-3"><strong>মোট সঞ্চয়:</strong> <span id="totalSaving">0</span> টাকা</div>
     <div><strong>মোট বাকি:</strong> <span id="totalRemaining">0</span> টাকা</div>
   </div>
 </div>
 
 <script>
-// Firebase Configuration
+// Firebase Configuration - Replace with your project details
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "lisnwebapp.firebaseapp.com",
@@ -89,30 +89,38 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Add Entry
+// Add Entry with proper validation
 function addEntry() {
-  const name = document.getElementById('entryName').value;
-  const amount = parseFloat(document.getElementById('entryAmount').value) || 0;
-  const installment = parseFloat(document.getElementById('entryInstallment').value) || 0;
+  const name = document.getElementById('entryName').value.trim();
+  const amount = parseFloat(document.getElementById('entryAmount').value);
+  const installment = parseFloat(document.getElementById('entryInstallment').value);
   const savingInput = document.getElementById('entrySaving').value;
   const saving = savingInput === '' ? 0 : parseFloat(savingInput);
 
-  if(!name || amount <= 0 || installment <= 0){
-    alert("নাম, মোট এবং মাসিক কিস্তি অবশ্যই পূরণ করতে হবে");
+  if(!name){
+    alert("নাম অবশ্যই লিখতে হবে");
+    return;
+  }
+  if(isNaN(amount) || amount <= 0){
+    alert("মোট অবশ্যই 0-এর বেশি হতে হবে");
+    return;
+  }
+  if(isNaN(installment) || installment <= 0){
+    alert("মাসিক কিস্তি অবশ্যই 0-এর বেশি হতে হবে");
     return;
   }
 
   db.collection("entries").add({ name, amount, installment, saving })
-    .then(()=>{ updateTable(); });
-
-  // Clear inputs
-  document.getElementById('entryName').value = '';
-  document.getElementById('entryAmount').value = '';
-  document.getElementById('entryInstallment').value = '';
-  document.getElementById('entrySaving').value = '';
+    .then(() => {
+      updateTable();
+      document.getElementById('entryName').value = '';
+      document.getElementById('entryAmount').value = '';
+      document.getElementById('entryInstallment').value = '';
+      document.getElementById('entrySaving').value = '';
+    });
 }
 
-// Update Table
+// Update Table & Summary
 function updateTable() {
   const tbody = document.querySelector('#entryTable tbody');
   tbody.innerHTML = '';
@@ -124,7 +132,7 @@ function updateTable() {
       const paid = e.installment;
       const remainingMonths = Math.ceil((e.amount - paid)/e.installment);
 
-      const row = `<tr>
+      tbody.innerHTML += `<tr>
         <td>${e.name}</td>
         <td>${e.amount}</td>
         <td>${e.installment}</td>
@@ -132,7 +140,6 @@ function updateTable() {
         <td>${remainingMonths}</td>
         <td>${paid}</td>
       </tr>`;
-      tbody.innerHTML += row;
 
       totalAmount += e.amount;
       totalPaid += paid;
