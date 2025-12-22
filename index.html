@@ -89,27 +89,20 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Add Entry with robust validation
+// Add Entry with optional numeric fields
 function addEntry() {
   const name = document.getElementById('entryName').value.trim();
-  const amountInput = document.getElementById('entryAmount').value.trim();
-  const installmentInput = document.getElementById('entryInstallment').value.trim();
-  const savingInput = document.getElementById('entrySaving').value.trim();
+  let amount = parseFloat(document.getElementById('entryAmount').value);
+  let installment = parseFloat(document.getElementById('entryInstallment').value);
+  let saving = parseFloat(document.getElementById('entrySaving').value);
 
-  const amount = Number(amountInput);
-  const installment = Number(installmentInput);
-  const saving = savingInput === '' ? 0 : Number(savingInput);
+  // Optional fields default to 0
+  amount = isNaN(amount) ? 0 : amount;
+  installment = isNaN(installment) ? 0 : installment;
+  saving = isNaN(saving) ? 0 : saving;
 
   if(!name){
     alert("নাম অবশ্যই লিখতে হবে");
-    return;
-  }
-  if(amountInput === '' || isNaN(amount) || amount <= 0){
-    alert("মোট অবশ্যই 0-এর বেশি হতে হবে");
-    return;
-  }
-  if(installmentInput === '' || isNaN(installment) || installment <= 0){
-    alert("মাসিক কিস্তি অবশ্যই 0-এর বেশি হতে হবে");
     return;
   }
 
@@ -135,7 +128,7 @@ function updateTable() {
     snapshot.forEach(doc => {
       const e = doc.data();
       const paid = e.installment;
-      const remainingMonths = Math.ceil((e.amount - paid)/e.installment);
+      const remainingMonths = e.installment > 0 ? Math.ceil((e.amount - paid)/e.installment) : 0;
 
       tbody.innerHTML += `<tr>
         <td>${e.name}</td>
