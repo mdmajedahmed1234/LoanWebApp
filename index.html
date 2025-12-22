@@ -89,30 +89,35 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Add Entry with proper validation
+// Add Entry with robust validation
 function addEntry() {
   const name = document.getElementById('entryName').value.trim();
-  const amount = parseFloat(document.getElementById('entryAmount').value);
-  const installment = parseFloat(document.getElementById('entryInstallment').value);
-  const savingInput = document.getElementById('entrySaving').value;
-  const saving = savingInput === '' ? 0 : parseFloat(savingInput);
+  const amountInput = document.getElementById('entryAmount').value.trim();
+  const installmentInput = document.getElementById('entryInstallment').value.trim();
+  const savingInput = document.getElementById('entrySaving').value.trim();
+
+  const amount = Number(amountInput);
+  const installment = Number(installmentInput);
+  const saving = savingInput === '' ? 0 : Number(savingInput);
 
   if(!name){
     alert("নাম অবশ্যই লিখতে হবে");
     return;
   }
-  if(isNaN(amount) || amount <= 0){
+  if(amountInput === '' || isNaN(amount) || amount <= 0){
     alert("মোট অবশ্যই 0-এর বেশি হতে হবে");
     return;
   }
-  if(isNaN(installment) || installment <= 0){
+  if(installmentInput === '' || isNaN(installment) || installment <= 0){
     alert("মাসিক কিস্তি অবশ্যই 0-এর বেশি হতে হবে");
     return;
   }
 
+  // Add to Firebase
   db.collection("entries").add({ name, amount, installment, saving })
     .then(() => {
       updateTable();
+      // Clear inputs
       document.getElementById('entryName').value = '';
       document.getElementById('entryAmount').value = '';
       document.getElementById('entryInstallment').value = '';
