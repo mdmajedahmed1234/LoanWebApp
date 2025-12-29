@@ -1,1 +1,1 @@
-print("#justiceforhadi\n" * 400000)
+node generate.js
